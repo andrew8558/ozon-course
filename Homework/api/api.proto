@@ -1,0 +1,108 @@
+syntax = "proto3";
+
+package pickup_points;
+option go_package = "./;pb";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+service PickupPoints {
+  //add pickup point in database
+  rpc Add (PickupPointRequest) returns (PickupPointId) {}
+  //return pickup point by id
+  rpc GetById (PickupPointId) returns (PickupPointWithId) {}
+  //delete pickup point in database
+  rpc Delete (PickupPointId) returns (google.protobuf.Empty) {}
+  //update data about existed pickup point
+  rpc Update (PickupPointWithId) returns (google.protobuf.Empty) {}
+  //return all pickup points
+  rpc List (google.protobuf.Empty) returns (PickupPointResponseList) {}
+}
+
+service Orders {
+  //add new order in storage
+  rpc AcceptOrderFromCourier (OrderRequest) returns (google.protobuf.Empty) {}
+  //return order form storage if term keeping has expired
+  rpc ReturnOrderToCourier (OrderId) returns (google.protobuf.Empty) {}
+  //change status of orders to issued
+  rpc GiveOrder (OrderIdList) returns (google.protobuf.Empty) {}
+  //change status of orders to refunded
+  rpc AcceptRefund (RefundRequest) returns (google.protobuf.Empty) {}
+  //return orders by customer's id
+  rpc GetOrders (GetRequest) returns (OrderResponseList) {}
+  //return refunded orders
+  rpc GetListRefund (GetListRefundRequest) returns (OrderResponseList) {}
+}
+
+message PickupPointRequest {
+  string name = 1;
+  string address = 2;
+  string contact_details = 3;
+}
+
+message PickupPointWithId{
+  int64 id = 1;
+  string name = 2;
+  string address = 3;
+  string contact_details = 4;
+}
+
+message PickupPointId{
+  int64 id = 1;
+}
+
+message PickupPointResponseList{
+  repeated PickupPointWithId pickup_points = 1;
+}
+
+message OrderRequest {
+  string id = 1;
+  string customer_id = 2;
+  google.protobuf.Timestamp term_keeping = 3;
+  float weight = 4;
+  float price = 5;
+  string package_type = 6;
+}
+
+enum OrderStatus {
+  ORDER_STATUS_UNSPECIFIED = 0;
+  ORDER_STATUS_ACCEPTED = 1;
+  ORDER_STATUS_REFUNDED = 2;
+  ORDER_STATUS_ISSUED = 3;
+}
+message OrderResponse {
+  string order_id = 1;
+  string customer_id = 2;
+  google.protobuf.Timestamp term_keeping = 3;
+  OrderStatus status = 4;
+  float weight = 5;
+  float price = 6;
+}
+
+message OrderResponseList {
+  repeated OrderResponse orders = 1;
+}
+
+message OrderId {
+  string id = 1;
+}
+
+message OrderIdList {
+  repeated OrderId order_ids = 1;
+}
+
+message RefundRequest {
+  string customer_id = 1;
+  string order_id = 2;
+}
+
+message GetRequest {
+  string customer_id = 1;
+  int32 limit = 2;
+  bool only_not_issued = 3;
+}
+
+message GetListRefundRequest {
+  int32 page_number = 1;
+  int32 page_size = 2;
+}

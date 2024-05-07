@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres
+    env_file:
+      - ./test.env
+    ports:
+      - "5434:5432"
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_CLIENT_PORT: 2191
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+      ZOOKEEPER_SERVERS: zookeeper:2889:3889
+    healthcheck:
+      test: echo stat | nc localhost 2191
+      interval: 10s
+      timeout: 10s
+      retries: 3
+    ports:
+      - "2191:2191"
+      - "2889:2889"
+      - "3889:3889"
+  kafka1:
+    image: confluentinc/cp-kafka:latest
+    healthcheck:
+      test: ps augwwx | egrep [S]upportedKafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9081:9081"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTNERS: LISTNER_INT://kafka1:29081,LISTENER_EXT://0.0.0.0:9081
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2191
+      KAFKA_ADVERTISED_LISTENERS: LISTNER_INT://kafka1:29081,LISTENER_EXT://localhost:9081
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTNER_INT:PLAINTEXT,LISTENER_EXT:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTNER_INT
+      ZOOKEEPER: zookeeper:2191
